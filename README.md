@@ -71,7 +71,7 @@ CS pins pinout for each sensor. ID is sensor ID in software.
 ```
 git clone https://github.com/jankrejci/max6625-station.git
 cd max6625-station
-cargo run
+cargo run --release
 ```
 
 Results appears on `ip_address:8080/metrics`.
