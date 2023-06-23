@@ -29,19 +29,12 @@ ssh pi@xx.xx.xx.xx
 
 Install basic tools
 ```
-sudo apt install git python3-pip python3-venv python3-dev python3-smbus build-essential
+sudo apt install git
 ```
 
 Install rust toolchain
 ```
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
-
-Install Python dependencies
-```
-pip3 install RPi.GPIO spidev
-```
-
-
 
 You can also install `Remote - SSH` extension to the VScode on your host machine and connect through remote development.
