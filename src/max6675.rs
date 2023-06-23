@@ -32,6 +32,8 @@ impl MAX6675 {
 
         let mut value: usize = (value[0] as usize) << 8 | value[1] as usize;
 
+        // If there are no data on the bus, there are still SCK present,
+        // therefore 0x0 is read.
         if value == 0 {
             return Err(anyhow!("Sensor is not present"));
         }

@@ -10,7 +10,7 @@ use std::{thread, time::Duration};
 #[macro_use]
 extern crate rocket;
 
-const CS_PINS: [u8; 10] = [14, 15, 18, 27, 23, 20, 1, 7, 25, 24];
+const CS_PINS: [u8; 12] = [14, 4, 15, 18, 27, 23, 20, 5, 1, 7, 25, 24];
 
 struct Temperatures {
     inner: Mutex<Vec<(usize, f64)>>,
