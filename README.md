@@ -39,7 +39,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 Install Python dependencies
 ```
-pip3 install Adafruit-GPIO
+pip3 install RPi.GPIO spidev
 ```
 
 
