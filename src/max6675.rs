@@ -1,13 +1,12 @@
 use crate::spi::Spi;
 use anyhow::{anyhow, Result};
-use log::debug;
 use rppal::gpio::{Gpio, OutputPin};
 use std::sync::{Arc, Mutex};
 
 pub struct MAX6675 {
     spi: Arc<Mutex<Spi>>,
     cs: OutputPin,
-    id: usize,
+    pub id: usize,
 }
 
 impl MAX6675 {
@@ -31,13 +30,16 @@ impl MAX6675 {
         let value = spi.read()?;
         self.cs.set_high();
 
-        debug!("sensor_id: {} data {:?}", self.id, value);
-
         let mut value: usize = (value[0] as usize) << 8 | value[1] as usize;
+
+        if value == 0 {
+            return Err(anyhow!("Sensor is not present"));
+        }
 
         if value & 0x4 == 0x4 {
             return Err(anyhow!("Temerature is NaN"));
         }
+
         // First 3 bits are just status flags
         value >>= 3;
         // Negative value, take 2's compliment. Compute this with subtraction.

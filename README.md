@@ -38,3 +38,13 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 You can also install `Remote - SSH` extension to the VScode on your host machine and connect through remote development.
+
+## Run the application
+
+```
+git clone https://github.com/jankrejci/max6625-station.git
+cd max6625-station
+cargo run
+```
+
+Results appears on `ip_address:8080/metrics`. Sensors are able to do hotplug so you can add or remove sensors as you wish.
