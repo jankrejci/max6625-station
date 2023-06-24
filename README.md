@@ -79,9 +79,18 @@ Sensors are able to do hotplug so you can add or remove sensors as you wish.
 
 Sample output of the webpage
 ```
-sensor_id:   0, temperature  27.75
-sensor_id:   4, temperature  27.00
-sensor_id:   9, temperature  26.50
+sensor_id:   0, time: 1687599501, temp:  26.75
+sensor_id:   1, time: 1687599501, temp:  26.00
+sensor_id:   2, time: 1687599501, temp:  27.25
+sensor_id:   3, time: 1687599501, temp:  26.50
+sensor_id:   4, time: 1687599501, temp:  26.75
+sensor_id:   5, time: 1687599501, temp:  26.25
+sensor_id:   6, time: 1687599501, temp:  28.50
+sensor_id:   7, time: 1687599501, temp:  29.00
+sensor_id:   8, time: 1687599501, temp:  29.25
+sensor_id:   9, time: 1687599501, temp:  29.75
+sensor_id:  10, time: 1687599501, temp:  28.50
+sensor_id:  11, time: 1687599501, temp:  26.75
 ```
 
 ## Board is protected with casing

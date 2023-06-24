@@ -5,7 +5,8 @@ use max6675::MAX6675;
 use rocket::State;
 use spi::Spi;
 use std::sync::{Arc, Mutex};
-use std::{thread, time::Duration};
+use std::thread;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[macro_use]
 extern crate rocket;
@@ -50,9 +51,16 @@ async fn metrics(temperatures: &State<Arc<Temperatures>>) -> String {
         .lock()
         .expect("Failed to acquire temperatures lock");
 
+    let time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("BUG: Failed to get current time")
+        .as_secs();
+
     let mut metrics = String::new();
     for (id, temp) in temperatures.iter() {
-        metrics.push_str(&format!("sensor_id: {id:3}, temperature {temp:6.2}\n"));
+        metrics.push_str(&format!(
+            "sensor_id: {id:3}, time: {time}, temp: {temp:6.2}\n"
+        ));
     }
     metrics
 }
