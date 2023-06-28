@@ -39,8 +39,7 @@ impl Temperatures {
     }
 
     pub fn load_calibration(&mut self, path: &str) -> Result<()> {
-        let calibration_file =
-            File::open(CALIBRATION_FILE).context("Failed to read calibration file")?;
+        let calibration_file = File::open(path).context("Failed to read calibration file")?;
         let reader = BufReader::new(calibration_file);
 
         self.calibration =
