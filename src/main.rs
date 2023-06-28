@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use max6675::MAX6675;
 use rocket::State;
 use spi::Spi;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::sync::{Arc, Mutex};
@@ -20,20 +20,20 @@ const CS_PINS: [u8; NUM_SENSORS] = [14, 4, 15, 18, 27, 23, 20, 5, 1, 7, 25, 24];
 const CALIBRATION_FILE: &str = "calibration.json";
 
 struct Temperatures {
-    pub inner: HashMap<usize, f64>,
-    pub calibration: HashMap<usize, f64>,
+    pub inner: BTreeMap<usize, f64>,
+    pub calibration: BTreeMap<usize, f64>,
 }
 
 impl Temperatures {
     pub fn new(num_sensors: usize) -> Self {
-        let mut default_calibration = HashMap::new();
+        let mut default_calibration = BTreeMap::new();
         for sensor_id in 0..num_sensors {
             // Default calibration offset is 0.0 ˚C
             default_calibration.insert(sensor_id, 0.0);
         }
 
         Self {
-            inner: HashMap::new(),
+            inner: BTreeMap::new(),
             calibration: default_calibration,
         }
     }
