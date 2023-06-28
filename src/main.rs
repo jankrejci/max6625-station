@@ -4,6 +4,7 @@ mod spi;
 use max6675::MAX6675;
 use rocket::State;
 use spi::Spi;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -11,13 +12,30 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 #[macro_use]
 extern crate rocket;
 
-const CS_PINS: [u8; 12] = [14, 4, 15, 18, 27, 23, 20, 5, 1, 7, 25, 24];
+const NUM_SENSORS: usize = 12;
+const CS_PINS: [u8; NUM_SENSORS] = [14, 4, 15, 18, 27, 23, 20, 5, 1, 7, 25, 24];
 
 struct Temperatures {
-    inner: Mutex<Vec<(usize, f64)>>,
+    pub inner: HashMap<usize, f64>,
+    pub calibration: HashMap<usize, f64>,
 }
 
-fn update_temp_periodically(temperatures: Arc<Temperatures>) {
+impl Temperatures {
+    pub fn new(num_sensors: usize) -> Self {
+        let mut default_calibration = HashMap::new();
+        for sensor_id in 0..num_sensors {
+            // Default calibration offset is 0.0 ˚C
+            default_calibration.insert(sensor_id, 0.0);
+        }
+
+        Self {
+            inner: HashMap::new(),
+            calibration: default_calibration,
+        }
+    }
+}
+
+fn update_temp_periodically(temperatures: Arc<Mutex<Temperatures>>) {
     thread::spawn(move || {
         let spi = Arc::new(Mutex::new(Spi::open()));
         let mut sensors = Vec::new();
@@ -28,14 +46,13 @@ fn update_temp_periodically(temperatures: Arc<Temperatures>) {
         loop {
             {
                 let mut temperatures = temperatures
-                    .inner
                     .lock()
-                    .expect("Failed to acquire temperatures lock");
+                    .expect("BUG: Failed to acquire temperatures lock");
 
-                temperatures.clear();
+                temperatures.inner.clear();
                 for sensor in sensors.iter_mut() {
                     if let Ok(temp) = sensor.read_temp() {
-                        temperatures.push((sensor.id, temp))
+                        temperatures.inner.insert(sensor.id, temp);
                     }
                 }
             }
@@ -45,31 +62,31 @@ fn update_temp_periodically(temperatures: Arc<Temperatures>) {
 }
 
 #[get("/metrics")]
-async fn metrics(temperatures: &State<Arc<Temperatures>>) -> String {
+async fn metrics(temperatures: &State<Arc<Mutex<Temperatures>>>) -> String {
     let temperatures = temperatures
-        .inner
         .lock()
-        .expect("Failed to acquire temperatures lock");
+        .expect("BUG: Failed to acquire temperatures lock");
 
-    let _time = SystemTime::now()
+    let time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("BUG: Failed to get current time")
-        .as_secs();
+        .as_millis();
 
     let mut metrics = String::new();
-    for (sensor_id, temp) in temperatures.iter() {
-        metrics.push_str(&format!(
-            "max6675_temperature_c{{sensor_id=\"{sensor_id}\"}} {temp:.2}\n"
-        ));
+    for (sensor_id, temp) in temperatures.inner.iter() {
+        if let Some(calibration_offset) = temperatures.calibration.get(sensor_id) {
+            let temp = temp - calibration_offset;
+            metrics.push_str(&format!(
+                "max6675_temperature_c{{sensor_id=\"{sensor_id}\"}} {temp:.2} {time}\n"
+            ));
+        }
     }
     metrics
 }
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
-    let temperatures = Arc::new(Temperatures {
-        inner: Mutex::new(vec![(0, 25.1), (99, 99.9)]),
-    });
+    let temperatures = Arc::new(Mutex::new(Temperatures::new(NUM_SENSORS)));
 
     update_temp_periodically(temperatures.clone());
 
