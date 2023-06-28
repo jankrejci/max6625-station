@@ -51,15 +51,15 @@ async fn metrics(temperatures: &State<Arc<Temperatures>>) -> String {
         .lock()
         .expect("Failed to acquire temperatures lock");
 
-    let time = SystemTime::now()
+    let _time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("BUG: Failed to get current time")
         .as_secs();
 
     let mut metrics = String::new();
-    for (id, temp) in temperatures.iter() {
+    for (sensor_id, temp) in temperatures.iter() {
         metrics.push_str(&format!(
-            "sensor_id: {id:3}, time: {time}, temp: {temp:6.2}\n"
+            "max6675_temperature_c{{sensor_id=\"{sensor_id}\"}} {temp:.2}\n"
         ));
     }
     metrics
