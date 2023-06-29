@@ -56,10 +56,10 @@ MISO    -> GPIO 9 / SPI 0 MISO
 CS pins pinout for each sensor. ID is sensor ID in software.
 ```
 | |
-| |   ID    0 |  1 |  1 |  2 |  3 |  4
+| |   ID    0 |  1 |  2 |  3 |  4 |  5
 |R|   GPIO 14 |  5 | 15 | 18 | 27 | 23
 |P|   ================================
-|i|   ID    5 |  6 |  6 |  7 |  8 |  9
+|i|   ID    6 |  7 |  8 |  9 | 10 | 11
 | |   GPIO 20 |  5 |  1 |  7 | 25 | 24
 | |
 ```
