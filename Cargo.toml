@@ -12,3 +12,7 @@ anyhow = "1.0.71"
 rocket = "0.5.0-rc.3"
 serde_json = "1.0.99"
 serde = "1.0.164"
+tokio = { version = "1.2.0", features = ["full"] }
+tokio-util = { version = "0.6.3", features = ["codec"] }
+tokio-stream = "0.1"
+futures = "0.3.7"
