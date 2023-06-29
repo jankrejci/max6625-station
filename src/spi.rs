@@ -2,6 +2,8 @@ use anyhow::Result;
 use spidev::{SpiModeFlags, Spidev, SpidevOptions};
 use std::io::Read;
 
+const NUM_RESPONSE_BYTES: usize = 2;
+
 pub struct Spi {
     inner: Spidev,
 }
@@ -21,9 +23,9 @@ impl Spi {
         Self { inner }
     }
 
-    pub fn read(&mut self) -> Result<[u8; 2]> {
-        let mut rx_buf = [0_u8; 2];
-        self.inner.read(&mut rx_buf)?;
+    pub fn read(&mut self) -> Result<[u8; NUM_RESPONSE_BYTES]> {
+        let mut rx_buf = [0_u8; NUM_RESPONSE_BYTES];
+        self.inner.read_exact(&mut rx_buf)?;
         Ok(rx_buf)
     }
 }
