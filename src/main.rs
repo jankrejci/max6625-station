@@ -75,7 +75,7 @@ async fn main() -> Result<(), rocket::Error> {
     let config = config::Config::load(&args.config);
 
     if let Some(real_temp) = args.calibrate {
-        info!("Calibrating sensors to temerature {} ˚C", real_temp);
+        info!("Calibrating sensors to temperature {} ˚C", real_temp);
         max6675::calibrate_sensors(config.sensors.clone(), real_temp)
             .await
             .expect("BUG: Failed to calibrate sensors");
