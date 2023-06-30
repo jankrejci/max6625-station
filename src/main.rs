@@ -6,6 +6,7 @@ mod spi;
 
 use anyhow::Result;
 use clap::Parser;
+use log::info;
 use max6675::Temperatures;
 use rocket::State;
 use std::sync::{Arc, Mutex};
@@ -53,11 +54,12 @@ async fn metrics(measurements: &State<Measurements>) -> String {
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
+    env_logger::init();
     let args = args::Cli::parse();
     let config = config::Config::load(&args.config);
 
-    if let Some(real_temp) = args.calibration {
-        println!("Calibrating");
+    if let Some(real_temp) = args.calibrate {
+        info!("Calibrating");
         return Ok(());
     }
 
