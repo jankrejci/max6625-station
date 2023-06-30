@@ -187,8 +187,8 @@ pub async fn calibrate_sensors(descriptor: SensorDescriptor, real_temp: f64) -> 
             } else {
                 warn!("Failed to read temp from sensor {}", sensor.id);
             }
-            sleep(Duration::from_millis(MEAS_DELAY_MS)).await;
         }
+        sleep(MEAS_DELAY_MS).await;
     }
 
     let mut calibration = BTreeMap::new();
