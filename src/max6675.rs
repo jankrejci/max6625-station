@@ -152,7 +152,7 @@ pub async fn update_temp_periodically(
 }
 
 pub async fn calibrate_sensors(descriptor: SensorDescriptor, real_temp: f64) -> Result<()> {
-    const NUM_MEASUREMENTS: usize = 180;
+    const NUM_MEASUREMENTS: usize = 20;
     // Minimal delay between measurements is 220 ms
     const MEAS_DELAY_MS: u64 = 330;
 
@@ -165,30 +165,32 @@ pub async fn calibrate_sensors(descriptor: SensorDescriptor, real_temp: f64) -> 
         temperatures.insert(id, Vec::new());
     }
 
-    let meas_time_s = NUM_MEASUREMENTS * MEAS_DELAY_MS as usize / 1000;
-    info!(
-        "Acquiring temperatures, it will take {} seconds",
-        meas_time_s
-    );
+    let mut filters = BTreeMap::new();
+    for sensor in &sensors {
+        filters.insert(
+            sensor.id,
+            Kalman::new(MEASUREMENT_ERROR, PROCESS_VARIANCE, ROOM_TEMPERATURE),
+        );
+    }
+
     for _ in 0..NUM_MEASUREMENTS {
         for sensor in sensors.iter_mut() {
             if let Ok(temp) = sensor.read_temp() {
-                let sensor_temps = temperatures
+                let filter = filters
                     .get_mut(&sensor.id)
-                    .expect("BUG: Failed to get sensor temperatures");
-                sensor_temps.push(temp);
+                    .expect("BUG: Failed to get filter");
+                filter.update(temp);
             } else {
                 warn!("Failed to read temp from sensor {}", sensor.id);
             }
+            sleep(Duration::from_millis(MEAS_DELAY_MS)).await;
         }
-        sleep(Duration::from_millis(MEAS_DELAY_MS)).await;
     }
 
     let mut calibration = BTreeMap::new();
-    for (sensor_id, temps) in temperatures {
-        let avg_temp: f64 = temps.iter().sum::<f64>() / temps.len() as f64;
-        let offset = real_temp - avg_temp;
-        debug!("sensor_id {sensor_id:2}, avg_temp {avg_temp:+6.2}, offset {offset:+5.2}");
+    for (sensor_id, filter) in filters {
+        let offset = real_temp - filter.value();
+        debug!("sensor_id {sensor_id:2}, offset {offset:+5.2}");
         calibration.insert(sensor_id, offset);
     }
     store_calibration(calibration, &descriptor.calibration_file)
