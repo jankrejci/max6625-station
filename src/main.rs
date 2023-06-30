@@ -1,5 +1,6 @@
 mod args;
 mod config;
+mod kalman;
 mod max6675;
 mod scope;
 mod spi;

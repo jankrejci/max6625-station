@@ -1,4 +1,5 @@
 use crate::config::SensorDescriptor;
+use crate::kalman::Kalman;
 use crate::spi::Spi;
 use anyhow::{anyhow, Context, Result};
 use rppal::gpio::{Gpio, OutputPin};
@@ -10,6 +11,7 @@ use tokio::time::{sleep, Duration};
 
 pub struct Temperatures {
     pub inner: BTreeMap<usize, f64>,
+    pub filtered: BTreeMap<usize, Kalman>,
     pub calibration: BTreeMap<usize, f64>,
 }
 
@@ -23,6 +25,7 @@ impl Temperatures {
 
         Self {
             inner: BTreeMap::new(),
+            filtered: BTreeMap::new(),
             calibration: default_calibration,
         }
     }
@@ -108,17 +111,18 @@ pub async fn update_temp_periodically(
     }
 
     loop {
+        let mut new_readings = BTreeMap::new();
+        for sensor in sensors.iter_mut() {
+            if let Ok(temp) = sensor.read_temp() {
+                new_readings.insert(sensor.id, temp);
+            }
+        }
         {
             let mut temperatures = temperatures
                 .lock()
                 .expect("BUG: Failed to acquire temperatures lock");
 
-            temperatures.inner.clear();
-            for sensor in sensors.iter_mut() {
-                if let Ok(temp) = sensor.read_temp() {
-                    temperatures.inner.insert(sensor.id, temp);
-                }
-            }
+            temperatures.inner = new_readings;
         }
         sleep(Duration::from_millis(1000)).await;
     }
