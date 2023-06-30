@@ -1,4 +1,4 @@
-use crate::kalman::Kalman;
+use crate::kalman::{self, Kalman};
 use crate::spi::Spi;
 use anyhow::{anyhow, Context, Result};
 use log::warn;
@@ -9,10 +9,6 @@ use std::fs::File;
 use std::io::{BufReader, Write};
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
-
-const PROCESS_VARIANCE: f64 = 0.01;
-const MEASUREMENT_ERROR: f64 = 2.0;
-const ROOM_TEMPERATURE: f64 = 25.0;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Descriptor {
@@ -30,16 +26,13 @@ pub struct Temperatures {
 impl Temperatures {
     const DEFAULT_OFFSET: f64 = 0.0;
 
-    pub fn new(num_sensors: usize) -> Self {
+    pub fn new(num_sensors: usize, kalman_descriptor: &kalman::Descriptor) -> Self {
         let mut default_calibration = BTreeMap::new();
         let mut filtered = BTreeMap::new();
         for sensor_id in 0..num_sensors {
             // Default calibration offset is 0.0 ˚C
             default_calibration.insert(sensor_id, Self::DEFAULT_OFFSET);
-            filtered.insert(
-                sensor_id,
-                Kalman::new(MEASUREMENT_ERROR, PROCESS_VARIANCE, ROOM_TEMPERATURE),
-            );
+            filtered.insert(sensor_id, Kalman::new(kalman_descriptor));
         }
 
         Self {
@@ -158,7 +151,11 @@ pub async fn update_temp_periodically(
     }
 }
 
-pub async fn calibrate_sensors(descriptor: Descriptor, real_temp: f64) -> Result<()> {
+pub async fn calibrate_sensors(
+    descriptor: Descriptor,
+    real_temp: f64,
+    kalman_descriptor: &kalman::Descriptor,
+) -> Result<()> {
     const NUM_MEASUREMENTS: usize = 100;
     // Minimal delay between measurements is 220 ms
     const MEAS_DELAY_MS: Duration = Duration::from_millis(330);
@@ -172,12 +169,11 @@ pub async fn calibrate_sensors(descriptor: Descriptor, real_temp: f64) -> Result
         temperatures.insert(id, Vec::new());
     }
 
+    let mut kalman_descriptor = kalman_descriptor.clone();
+    kalman_descriptor.initial_temperature = real_temp;
     let mut filters = BTreeMap::new();
     for sensor in &sensors {
-        filters.insert(
-            sensor.id,
-            Kalman::new(MEASUREMENT_ERROR, PROCESS_VARIANCE, ROOM_TEMPERATURE),
-        );
+        filters.insert(sensor.id, Kalman::new(&kalman_descriptor));
     }
 
     info!(

@@ -76,13 +76,13 @@ async fn main() -> Result<(), rocket::Error> {
 
     if let Some(real_temp) = args.calibrate {
         info!("Calibrating sensors to temperature {} ˚C", real_temp);
-        max6675::calibrate_sensors(config.sensors.clone(), real_temp)
+        max6675::calibrate_sensors(config.sensors.clone(), real_temp, &config.kalman)
             .await
             .expect("BUG: Failed to calibrate sensors");
         return Ok(());
     }
 
-    let mut temperatures = Temperatures::new(config.sensors.num_sensors);
+    let mut temperatures = Temperatures::new(config.sensors.num_sensors, &config.kalman);
     temperatures
         .load_calibration(&config.sensors.calibration_file)
         .expect("Failed to load calibration");

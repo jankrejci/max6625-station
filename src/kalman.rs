@@ -22,19 +22,19 @@ impl Kalman {
     /// measurement_error: How much do we expect to our measurement vary
     /// process_variance: How fast your measurement moves. Usually 0.001 - 1
     /// init_temp: Initial temperature, where the filter starts calculation
-    pub fn new(measurement_error: f64, process_variance: f64, init_temp: f64) -> Self {
+    pub fn new(descriptor: &Descriptor) -> Self {
         // Can be initilized with the same value as measurement_error,
         // since the kalman filter will adjust its value.
-        let estimation_error = measurement_error;
-        let gain = estimation_error / (estimation_error + measurement_error);
+        let estimation_error = descriptor.measurement_error;
+        let gain = estimation_error / (estimation_error + descriptor.measurement_error);
 
         Self {
             gain,
-            process_variance,
+            process_variance: descriptor.process_variance,
             estimation_error,
-            measurement_error,
-            current_estimation: init_temp,
-            last_estimation: init_temp,
+            measurement_error: descriptor.measurement_error,
+            current_estimation: descriptor.initial_temperature,
+            last_estimation: descriptor.initial_temperature,
         }
     }
 
