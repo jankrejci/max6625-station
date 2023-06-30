@@ -8,13 +8,12 @@ pub struct Kalman {
 }
 
 impl Kalman {
-    const ROOM_TEMPERATURE: f64 = 25.0;
-
     /// Creates new instance of the Kalman filter
     ///
     /// measurement_error: How much do we expect to our measurement vary
     /// process_variance: How fast your measurement moves. Usually 0.001 - 1
-    pub fn new(measurement_error: f64, process_variance: f64) -> Self {
+    /// init_temp: Initial temperature, where the filter starts calculation
+    pub fn new(measurement_error: f64, process_variance: f64, init_temp: f64) -> Self {
         // Can be initilized with the same value as measurement_error,
         // since the kalman filter will adjust its value.
         let estimation_error = measurement_error;
@@ -25,8 +24,8 @@ impl Kalman {
             process_variance,
             estimation_error,
             measurement_error,
-            current_estimation: Self::ROOM_TEMPERATURE,
-            last_estimation: Self::ROOM_TEMPERATURE,
+            current_estimation: init_temp,
+            last_estimation: init_temp,
         }
     }
 

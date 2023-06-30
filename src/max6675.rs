@@ -12,6 +12,7 @@ use tokio::time::{sleep, Duration};
 
 const PROCESS_VARIANCE: f64 = 0.01;
 const MEASUREMENT_ERROR: f64 = 2.0;
+const ROOM_TEMPERATURE: f64 = 25.0;
 
 pub struct Temperatures {
     pub inner: BTreeMap<usize, f64>,
@@ -28,7 +29,10 @@ impl Temperatures {
         for sensor_id in 0..num_sensors {
             // Default calibration offset is 0.0 ˚C
             default_calibration.insert(sensor_id, Self::DEFAULT_OFFSET);
-            filtered.insert(sensor_id, Kalman::new(MEASUREMENT_ERROR, PROCESS_VARIANCE));
+            filtered.insert(
+                sensor_id,
+                Kalman::new(MEASUREMENT_ERROR, PROCESS_VARIANCE, ROOM_TEMPERATURE),
+            );
         }
 
         Self {
