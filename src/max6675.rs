@@ -112,6 +112,8 @@ pub async fn update_temp_periodically(
     descriptor: SensorDescriptor,
     temperatures: Arc<Mutex<Temperatures>>,
 ) {
+    const UPDATE_PERIOD_MS: Duration = Duration::from_millis(400);
+
     let spi = Arc::new(Mutex::new(Spi::open()));
     let mut sensors = Vec::new();
     for (id, cs_pin) in descriptor.cs_pins.iter().enumerate() {
@@ -141,7 +143,7 @@ pub async fn update_temp_periodically(
                 }
             }
         }
-        sleep(Duration::from_millis(1000)).await;
+        sleep(UPDATE_PERIOD_MS).await;
     }
 }
 

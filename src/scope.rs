@@ -77,6 +77,8 @@ pub async fn update_voltage_periodically(
     descriptor: ScopeDescriptor,
     voltage: Arc<Mutex<Option<f64>>>,
 ) {
+    const UPDATE_PERIOD_MS: Duration = Duration::from_millis(400);
+
     let mut scope = Scope::open(&descriptor.resource()).await;
     scope.init().await.expect("BUG: Failed to initialize scope");
 
@@ -86,6 +88,6 @@ pub async fn update_voltage_periodically(
             let mut voltage = voltage.lock().expect("BUG: Failed to acquire voltagelock");
             *voltage = voltage_reading;
         }
-        sleep(Duration::from_millis(1000)).await;
+        sleep(UPDATE_PERIOD_MS).await;
     }
 }
