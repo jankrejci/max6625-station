@@ -50,6 +50,14 @@ async fn metrics(measurements: &State<Measurements>) -> String {
             ));
         }
     }
+    for (sensor_id, filtered) in temperatures.filtered.iter() {
+        if let Some(calibration_offset) = temperatures.calibration.get(sensor_id) {
+            let temp = filtered.value() + calibration_offset;
+            metrics.push_str(&format!(
+                "max6675_temperature_filtered_c{{sensor_id=\"{sensor_id}\"}} {temp:.2} {time}\n"
+            ));
+        }
+    }
     metrics
 }
 

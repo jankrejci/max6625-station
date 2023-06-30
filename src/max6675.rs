@@ -2,12 +2,17 @@ use crate::config::SensorDescriptor;
 use crate::kalman::Kalman;
 use crate::spi::Spi;
 use anyhow::{anyhow, Context, Result};
+use log::warn;
 use rppal::gpio::{Gpio, OutputPin};
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{BufReader, Write};
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
+
+const KALMAN_Q: f64 = 0.01;
+const KALMAN_ERR_EST: f64 = 2.0;
+const KALMAN_ERR_MEAS: f64 = 2.0;
 
 pub struct Temperatures {
     pub inner: BTreeMap<usize, f64>,
@@ -16,16 +21,23 @@ pub struct Temperatures {
 }
 
 impl Temperatures {
+    const DEFAULT_OFFSET: f64 = 0.0;
+
     pub fn new(num_sensors: usize) -> Self {
         let mut default_calibration = BTreeMap::new();
+        let mut filtered = BTreeMap::new();
         for sensor_id in 0..num_sensors {
             // Default calibration offset is 0.0 ˚C
-            default_calibration.insert(sensor_id, 0.0);
+            default_calibration.insert(sensor_id, Self::DEFAULT_OFFSET);
+            filtered.insert(
+                sensor_id,
+                Kalman::new(KALMAN_ERR_MEAS, KALMAN_ERR_EST, KALMAN_Q),
+            );
         }
 
         Self {
             inner: BTreeMap::new(),
-            filtered: BTreeMap::new(),
+            filtered,
             calibration: default_calibration,
         }
     }
@@ -111,18 +123,27 @@ pub async fn update_temp_periodically(
     }
 
     loop {
-        let mut new_readings = BTreeMap::new();
-        for sensor in sensors.iter_mut() {
-            if let Ok(temp) = sensor.read_temp() {
-                new_readings.insert(sensor.id, temp);
-            }
-        }
         {
             let mut temperatures = temperatures
                 .lock()
                 .expect("BUG: Failed to acquire temperatures lock");
 
-            temperatures.inner = new_readings;
+            temperatures.inner.clear();
+            for sensor in sensors.iter_mut() {
+                let temp = match sensor.read_temp() {
+                    Ok(temp) => temp,
+                    _ => {
+                        warn!("Failed to read sensor_id {}", sensor.id);
+                        continue;
+                    }
+                };
+
+                temperatures.inner.insert(sensor.id, temp);
+
+                if let Some(filtered_temperature) = temperatures.filtered.get_mut(&sensor.id) {
+                    filtered_temperature.update(temp);
+                }
+            }
         }
         sleep(Duration::from_millis(1000)).await;
     }
