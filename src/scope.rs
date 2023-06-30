@@ -1,11 +1,23 @@
-use crate::config::ScopeDescriptor;
 use anyhow::{anyhow, Context, Result};
 use futures::{SinkExt, StreamExt};
+use serde::Deserialize;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpStream;
 use tokio::time::{sleep, timeout, Duration};
 use tokio_util::codec::{Framed, LinesCodec};
+
+#[derive(Clone, Deserialize, Debug)]
+pub struct Descriptor {
+    pub address: String,
+    pub port: usize,
+}
+
+impl Descriptor {
+    pub fn resource(&self) -> String {
+        format!("{}:{}", self.address, self.port)
+    }
+}
 
 pub struct Scope {
     control: Framed<TcpStream, LinesCodec>,
@@ -73,10 +85,7 @@ impl Scope {
     }
 }
 
-pub async fn update_voltage_periodically(
-    descriptor: ScopeDescriptor,
-    voltage: Arc<Mutex<Option<f64>>>,
-) {
+pub async fn update_voltage_periodically(descriptor: Descriptor, voltage: Arc<Mutex<Option<f64>>>) {
     const UPDATE_PERIOD_MS: Duration = Duration::from_millis(400);
 
     let mut scope = Scope::open(&descriptor.resource()).await;

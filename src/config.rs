@@ -1,31 +1,15 @@
+use crate::kalman;
+use crate::max6675;
+use crate::scope;
 use serde::Deserialize;
 use std::fs::File;
 use std::io::Read;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
-    pub scope: ScopeDescriptor,
-    pub sensors: SensorDescriptor,
-    pub kalman: KalmanDescriptor,
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct ScopeDescriptor {
-    pub address: String,
-    pub port: usize,
-}
-
-impl ScopeDescriptor {
-    pub fn resource(&self) -> String {
-        format!("{}:{}", self.address, self.port)
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct SensorDescriptor {
-    pub num_sensors: usize,
-    pub cs_pins: Vec<usize>,
-    pub calibration_file: String,
+    pub scope: scope::Descriptor,
+    pub sensors: max6675::Descriptor,
+    pub kalman: kalman::Descriptor,
 }
 
 impl Config {
@@ -38,11 +22,4 @@ impl Config {
 
         toml::from_str(&buffer).expect("Failed to parse configuration file")
     }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct KalmanDescriptor {
-    pub process_variance: f64,
-    pub measurement_error: f64,
-    pub initial_temperature: f64,
 }

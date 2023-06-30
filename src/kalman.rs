@@ -1,3 +1,12 @@
+use serde::Deserialize;
+
+#[derive(Clone, Deserialize, Debug)]
+pub struct Descriptor {
+    pub process_variance: f64,
+    pub measurement_error: f64,
+    pub initial_temperature: f64,
+}
+
 pub struct Kalman {
     gain: f64,
     process_variance: f64,

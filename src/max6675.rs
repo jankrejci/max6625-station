@@ -1,9 +1,9 @@
-use crate::config::SensorDescriptor;
 use crate::kalman::Kalman;
 use crate::spi::Spi;
 use anyhow::{anyhow, Context, Result};
 use log::warn;
 use rppal::gpio::{Gpio, OutputPin};
+use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{BufReader, Write};
@@ -13,6 +13,13 @@ use tokio::time::{sleep, Duration};
 const PROCESS_VARIANCE: f64 = 0.01;
 const MEASUREMENT_ERROR: f64 = 2.0;
 const ROOM_TEMPERATURE: f64 = 25.0;
+
+#[derive(Clone, Deserialize, Debug)]
+pub struct Descriptor {
+    pub num_sensors: usize,
+    pub cs_pins: Vec<usize>,
+    pub calibration_file: String,
+}
 
 pub struct Temperatures {
     pub inner: BTreeMap<usize, f64>,
@@ -113,7 +120,7 @@ impl MAX6675 {
 }
 
 pub async fn update_temp_periodically(
-    descriptor: SensorDescriptor,
+    descriptor: Descriptor,
     temperatures: Arc<Mutex<Temperatures>>,
 ) {
     const UPDATE_PERIOD_MS: Duration = Duration::from_millis(400);
@@ -151,7 +158,7 @@ pub async fn update_temp_periodically(
     }
 }
 
-pub async fn calibrate_sensors(descriptor: SensorDescriptor, real_temp: f64) -> Result<()> {
+pub async fn calibrate_sensors(descriptor: Descriptor, real_temp: f64) -> Result<()> {
     const NUM_MEASUREMENTS: usize = 100;
     // Minimal delay between measurements is 220 ms
     const MEAS_DELAY_MS: Duration = Duration::from_millis(330);
