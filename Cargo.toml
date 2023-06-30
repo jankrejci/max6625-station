@@ -16,3 +16,5 @@ tokio = { version = "1.2.0", features = ["full"] }
 tokio-util = { version = "0.6.3", features = ["codec"] }
 tokio-stream = "0.1"
 futures = "0.3.7"
+toml = "0.7.5"
+clap = { version = "4.3.10", features = ["derive"] }

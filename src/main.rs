@@ -1,97 +1,22 @@
+mod args;
+mod config;
 mod max6675;
 mod scope;
 mod spi;
 
-use anyhow::{Context, Result};
-use max6675::MAX6675;
+use anyhow::Result;
+use clap::Parser;
+use max6675::Temperatures;
 use rocket::State;
-use scope::Scope;
-use spi::Spi;
-use std::collections::BTreeMap;
-use std::fs::File;
-use std::io::BufReader;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tokio::time::sleep;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[macro_use]
 extern crate rocket;
 
-const NUM_SENSORS: usize = 12;
-const CS_PINS: [u8; NUM_SENSORS] = [14, 4, 15, 18, 27, 23, 20, 5, 1, 7, 25, 24];
-const CALIBRATION_FILE: &str = "calibration.json";
-const SCOPE_RESOURCE: &str = "10.33.50.233:5025";
-
 struct Measurements {
     temperatures: Arc<Mutex<Temperatures>>,
     voltage: Arc<Mutex<Option<f64>>>,
-}
-
-struct Temperatures {
-    pub inner: BTreeMap<usize, f64>,
-    pub calibration: BTreeMap<usize, f64>,
-}
-
-impl Temperatures {
-    pub fn new(num_sensors: usize) -> Self {
-        let mut default_calibration = BTreeMap::new();
-        for sensor_id in 0..num_sensors {
-            // Default calibration offset is 0.0 ˚C
-            default_calibration.insert(sensor_id, 0.0);
-        }
-
-        Self {
-            inner: BTreeMap::new(),
-            calibration: default_calibration,
-        }
-    }
-
-    pub fn load_calibration(&mut self, path: &str) -> Result<()> {
-        let calibration_file = File::open(path).context("Failed to read calibration file")?;
-        let reader = BufReader::new(calibration_file);
-
-        self.calibration =
-            serde_json::from_reader(reader).context("Failed to parse calibration file")?;
-        Ok(())
-    }
-}
-
-async fn update_temp_periodically(temperatures: Arc<Mutex<Temperatures>>) {
-    let spi = Arc::new(Mutex::new(Spi::open()));
-    let mut sensors = Vec::new();
-    for (id, cs_pin) in CS_PINS.iter().enumerate() {
-        sensors.push(MAX6675::new(spi.clone(), *cs_pin, id));
-    }
-
-    loop {
-        {
-            let mut temperatures = temperatures
-                .lock()
-                .expect("BUG: Failed to acquire temperatures lock");
-
-            temperatures.inner.clear();
-            for sensor in sensors.iter_mut() {
-                if let Ok(temp) = sensor.read_temp() {
-                    temperatures.inner.insert(sensor.id, temp);
-                }
-            }
-        }
-        sleep(Duration::from_millis(1000)).await;
-    }
-}
-
-async fn update_voltage_periodically(voltage: Arc<Mutex<Option<f64>>>) {
-    let mut scope = Scope::open(SCOPE_RESOURCE).await;
-    scope.init().await.expect("BUG: Failed to initialize scope");
-
-    loop {
-        let voltage_reading = scope.read_mean().await.ok();
-        {
-            let mut voltage = voltage.lock().expect("BUG: Failed to acquire voltagelock");
-            *voltage = voltage_reading;
-        }
-        sleep(Duration::from_millis(1000)).await;
-    }
 }
 
 #[get("/metrics")]
@@ -128,9 +53,17 @@ async fn metrics(measurements: &State<Measurements>) -> String {
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
-    let mut temperatures = Temperatures::new(NUM_SENSORS);
+    let args = args::Cli::parse();
+    let config = config::Config::load(&args.config);
+
+    if let Some(real_temp) = args.calibration {
+        println!("Calibrating");
+        return Ok(());
+    }
+
+    let mut temperatures = Temperatures::new(config.sensors.num_sensors);
     temperatures
-        .load_calibration(CALIBRATION_FILE)
+        .load_calibration(&config.sensors.calibration_file)
         .expect("Failed to load calibration");
     let temperatures = Arc::new(Mutex::new(temperatures));
 
@@ -141,8 +74,14 @@ async fn main() -> Result<(), rocket::Error> {
         voltage: voltage.clone(),
     };
 
-    tokio::spawn(update_temp_periodically(temperatures.clone()));
-    tokio::spawn(update_voltage_periodically(voltage.clone()));
+    tokio::spawn(max6675::update_temp_periodically(
+        config.sensors.clone(),
+        temperatures.clone(),
+    ));
+    tokio::spawn(scope::update_voltage_periodically(
+        config.scope.clone(),
+        voltage.clone(),
+    ));
 
     let _rocket = rocket::build()
         .mount("/", routes![metrics])

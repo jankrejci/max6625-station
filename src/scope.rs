@@ -1,9 +1,10 @@
+use crate::config::ScopeDescriptor;
 use anyhow::{anyhow, Context, Result};
 use futures::{SinkExt, StreamExt};
 use std::str::FromStr;
-use std::time::Duration;
+use std::sync::{Arc, Mutex};
 use tokio::net::TcpStream;
-use tokio::time::{sleep, timeout};
+use tokio::time::{sleep, timeout, Duration};
 use tokio_util::codec::{Framed, LinesCodec};
 
 pub struct Scope {
@@ -36,7 +37,7 @@ impl Scope {
         // Channell sensitivity 5 V / div
         self.send("C1:VDIV 5V").await?;
         // Offset -10 V
-        self.send("C1:OFST -10V").await?;
+        self.send("C1:OFST -15V").await?;
 
         sleep(Duration::from_millis(5000)).await;
         Ok(())
@@ -69,5 +70,22 @@ impl Scope {
                 Ok(f64::from_str(&value)?)
             }
         }
+    }
+}
+
+pub async fn update_voltage_periodically(
+    descriptor: ScopeDescriptor,
+    voltage: Arc<Mutex<Option<f64>>>,
+) {
+    let mut scope = Scope::open(&descriptor.resource()).await;
+    scope.init().await.expect("BUG: Failed to initialize scope");
+
+    loop {
+        let voltage_reading = scope.read_mean().await.ok();
+        {
+            let mut voltage = voltage.lock().expect("BUG: Failed to acquire voltagelock");
+            *voltage = voltage_reading;
+        }
+        sleep(Duration::from_millis(1000)).await;
     }
 }

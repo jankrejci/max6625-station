@@ -1,0 +1,9 @@
+[scope]
+# address = "10.33.50.233"
+address = "192.168.0.18"
+port = 5025
+
+[sensors]
+num_sensors = 12
+cs_pins = [14, 4, 15, 18, 27, 23, 20, 5, 1, 7, 25, 24]
+calibration_file = "calibration.json"
