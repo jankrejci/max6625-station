@@ -152,9 +152,9 @@ pub async fn update_temp_periodically(
 }
 
 pub async fn calibrate_sensors(descriptor: SensorDescriptor, real_temp: f64) -> Result<()> {
-    const NUM_MEASUREMENTS: usize = 20;
+    const NUM_MEASUREMENTS: usize = 100;
     // Minimal delay between measurements is 220 ms
-    const MEAS_DELAY_MS: u64 = 330;
+    const MEAS_DELAY_MS: Duration = Duration::from_millis(330);
 
     let mut temperatures: BTreeMap<usize, Vec<f64>> = BTreeMap::new();
 
@@ -173,6 +173,10 @@ pub async fn calibrate_sensors(descriptor: SensorDescriptor, real_temp: f64) -> 
         );
     }
 
+    info!(
+        "Acquiring data for calibration, it will take {} seconds",
+        MEAS_DELAY_MS.as_millis() * NUM_MEASUREMENTS as u128 / 1000
+    );
     for _ in 0..NUM_MEASUREMENTS {
         for sensor in sensors.iter_mut() {
             if let Ok(temp) = sensor.read_temp() {
