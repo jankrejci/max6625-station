@@ -10,9 +10,8 @@ use std::io::{BufReader, Write};
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
 
-const KALMAN_Q: f64 = 0.01;
-const KALMAN_ERR_EST: f64 = 2.0;
-const KALMAN_ERR_MEAS: f64 = 2.0;
+const PROCESS_VARIANCE: f64 = 0.01;
+const MEASUREMENT_ERROR: f64 = 2.0;
 
 pub struct Temperatures {
     pub inner: BTreeMap<usize, f64>,
@@ -29,10 +28,7 @@ impl Temperatures {
         for sensor_id in 0..num_sensors {
             // Default calibration offset is 0.0 ˚C
             default_calibration.insert(sensor_id, Self::DEFAULT_OFFSET);
-            filtered.insert(
-                sensor_id,
-                Kalman::new(KALMAN_ERR_MEAS, KALMAN_ERR_EST, KALMAN_Q),
-            );
+            filtered.insert(sensor_id, Kalman::new(MEASUREMENT_ERROR, PROCESS_VARIANCE));
         }
 
         Self {
