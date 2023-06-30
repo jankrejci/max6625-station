@@ -6,6 +6,7 @@ use std::io::Read;
 pub struct Config {
     pub scope: ScopeDescriptor,
     pub sensors: SensorDescriptor,
+    pub kalman: KalmanDescriptor,
 }
 
 #[derive(Clone, Deserialize, Debug)]
@@ -37,4 +38,11 @@ impl Config {
 
         toml::from_str(&buffer).expect("Failed to parse configuration file")
     }
+}
+
+#[derive(Clone, Deserialize, Debug)]
+pub struct KalmanDescriptor {
+    pub process_variance: f64,
+    pub measurement_error: f64,
+    pub initial_temperature: f64,
 }
