@@ -9,6 +9,6 @@ cs_pins = [14, 4, 15, 18, 27, 23, 20, 5, 1, 7, 25, 24]
 calibration_file = "calibration.json"
 
 [kalman]
-process_variance = 0.01
+process_variance = 0.05
 measurement_error = 2.0
 initial_temperature = 25.0
