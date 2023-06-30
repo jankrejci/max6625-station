@@ -43,7 +43,7 @@ async fn metrics(measurements: &State<Measurements>) -> String {
     }
     for (sensor_id, temp) in temperatures.inner.iter() {
         if let Some(calibration_offset) = temperatures.calibration.get(sensor_id) {
-            let temp = temp - calibration_offset;
+            let temp = temp + calibration_offset;
             metrics.push_str(&format!(
                 "max6675_temperature_c{{sensor_id=\"{sensor_id}\"}} {temp:.2} {time}\n"
             ));
@@ -59,7 +59,10 @@ async fn main() -> Result<(), rocket::Error> {
     let config = config::Config::load(&args.config);
 
     if let Some(real_temp) = args.calibrate {
-        info!("Calibrating");
+        info!("Calibrating sensors to temerature {} ˚C", real_temp);
+        max6675::calibrate_sensors(config.sensors.clone(), real_temp)
+            .await
+            .expect("BUG: Failed to calibrate sensors");
         return Ok(());
     }
 

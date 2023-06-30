@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use rppal::gpio::{Gpio, OutputPin};
 use std::collections::BTreeMap;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Write};
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
 
@@ -28,7 +28,7 @@ impl Temperatures {
     }
 
     pub fn load_calibration(&mut self, path: &str) -> Result<()> {
-        let calibration_file = File::open(path).context("Failed to read calibration file")?;
+        let calibration_file = File::open(path).context("Failed to open calibration file")?;
         let reader = BufReader::new(calibration_file);
 
         self.calibration =
@@ -122,4 +122,61 @@ pub async fn update_temp_periodically(
         }
         sleep(Duration::from_millis(1000)).await;
     }
+}
+
+pub async fn calibrate_sensors(descriptor: SensorDescriptor, real_temp: f64) -> Result<()> {
+    const NUM_MEASUREMENTS: usize = 180;
+    // Minimal delay between measurements is 220 ms
+    const MEAS_DELAY_MS: u64 = 330;
+
+    let mut temperatures: BTreeMap<usize, Vec<f64>> = BTreeMap::new();
+
+    let spi = Arc::new(Mutex::new(Spi::open()));
+    let mut sensors = Vec::new();
+    for (id, cs_pin) in descriptor.cs_pins.iter().enumerate() {
+        sensors.push(MAX6675::new(spi.clone(), *cs_pin, id));
+        temperatures.insert(id, Vec::new());
+    }
+
+    let meas_time_s = NUM_MEASUREMENTS * MEAS_DELAY_MS as usize / 1000;
+    info!(
+        "Acquiring temperatures, it will take {} seconds",
+        meas_time_s
+    );
+    for _ in 0..NUM_MEASUREMENTS {
+        for sensor in sensors.iter_mut() {
+            if let Ok(temp) = sensor.read_temp() {
+                let sensor_temps = temperatures
+                    .get_mut(&sensor.id)
+                    .expect("BUG: Failed to get sensor temperatures");
+                sensor_temps.push(temp);
+            } else {
+                warn!("Failed to read temp from sensor {}", sensor.id);
+            }
+        }
+        sleep(Duration::from_millis(MEAS_DELAY_MS)).await;
+    }
+
+    let mut calibration = BTreeMap::new();
+    for (sensor_id, temps) in temperatures {
+        let avg_temp: f64 = temps.iter().sum::<f64>() / temps.len() as f64;
+        let offset = real_temp - avg_temp;
+        debug!("sensor_id {sensor_id:2}, avg_temp {avg_temp:+6.2}, offset {offset:+5.2}");
+        calibration.insert(sensor_id, offset);
+    }
+    store_calibration(calibration, &descriptor.calibration_file)
+        .context("BUG: Failed to store calibration")?;
+    Ok(())
+}
+
+pub fn store_calibration(calibration: BTreeMap<usize, f64>, path: &str) -> Result<()> {
+    let mut calibration_file = File::create(path).context("Failed to open calibration file")?;
+    calibration_file
+        .write_all(
+            serde_json::to_string_pretty(&calibration)
+                .context("BUG: Failed to serialize calibration")?
+                .as_bytes(),
+        )
+        .context("BUG: Failed to write calibration file")?;
+    Ok(())
 }
