@@ -58,6 +58,13 @@ async fn metrics(measurements: &State<Measurements>) -> String {
             ));
         }
     }
+
+    for (sensor_id, temp) in temperatures.inner.iter() {
+        metrics.push_str(&format!(
+            "max6675_temperature_raw_c{{sensor_id=\"{sensor_id}\"}} {temp:.2} {time}\n"
+        ));
+    }
+
     metrics
 }
 
