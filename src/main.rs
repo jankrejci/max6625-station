@@ -85,7 +85,7 @@ async fn main() -> Result<(), rocket::Error> {
     let mut temperatures = Temperatures::new(config.sensors.num_sensors, &config.kalman);
     temperatures
         .load_calibration(&config.sensors.calibration_file)
-        .expect("Failed to load calibration");
+        .unwrap_or_else(|_| warn!("Failed to load calibration"));
     let temperatures = Arc::new(Mutex::new(temperatures));
 
     let voltage = Arc::new(Mutex::new(None));
