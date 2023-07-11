@@ -3,8 +3,8 @@ FROM debian:bullseye
 RUN apt update && apt install -y curl ssh gcc-aarch64-linux-gnu build-essential
 
 RUN mkdir /project
-ARG UID=1000
-ARG GID=1000
+ARG UID
+ARG GID
 RUN groupadd -g $GID -o pi && \
     useradd -u $UID -g $GID -m pi && \
     usermod -aG sudo pi && \

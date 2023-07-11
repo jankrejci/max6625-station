@@ -8,4 +8,4 @@ docker run \
 	-v "cargo-dir:/home/pi/.cargo" \
     -v "${SSH_AUTH_SOCK}:/ssh-agent" \
 	rpi-cross-compile-image \
-    $@
+    "$@"
