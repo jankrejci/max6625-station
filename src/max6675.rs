@@ -177,7 +177,7 @@ pub async fn calibrate_sensors(
     }
 
     info!(
-        "Acquiring data for calibration, it will take {} seconds",
+        "Acquiring calibration data for {} seconds",
         MEAS_DELAY_MS.as_millis() * NUM_MEASUREMENTS as u128 / 1000
     );
     for _ in 0..NUM_MEASUREMENTS {
