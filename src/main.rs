@@ -43,6 +43,9 @@ async fn metrics(measurements: &State<Measurements>) -> String {
     if let Some(psu_voltage) = *psu_voltage {
         metrics.push_str(&format!("scope_voltage_v {psu_voltage:.2} {time}\n"));
     }
+    if let Some(fan_rpm) = *fan_rpm {
+        metrics.push_str(&format!("scope_fan_rpm {fan_rpm:.0} {time}\n"));
+    }
     for (sensor_id, temp) in temperatures.inner.iter() {
         if let Some(calibration_offset) = temperatures.calibration.get(sensor_id) {
             let temp = temp + calibration_offset;
