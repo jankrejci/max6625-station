@@ -83,6 +83,19 @@ impl Scope {
             }
         }
     }
+
+    pub async fn read_fan_rpm(&mut self) -> Result<f64> {
+        self.send("C2:PAVA? FREQ").await?;
+        let response = self.recv().await?;
+
+        match response.trim().split(',').nth(1) {
+            None => Err(anyhow!("Received wrong response")),
+            Some(value) => {
+                let value = value.replace('V', "");
+                Ok(f64::from_str(&value)?)
+            }
+        }
+    }
 }
 
 pub async fn update_voltage_periodically(descriptor: Descriptor, voltage: Arc<Mutex<Option<f64>>>) {
