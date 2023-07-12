@@ -92,7 +92,10 @@ impl Scope {
             None => Err(anyhow!("Received wrong response")),
             Some(value) => {
                 let value = value.replace('V', "");
-                Ok(f64::from_str(&value)?)
+                let mut fan_rpm = f64::from_str(&value)?;
+                // Frequency to RPM, there are 2 pulses per fan revolution
+                fan_rpm *= 60.0 / 2.0;
+                Ok(fan_rpm)
             }
         }
     }
