@@ -105,6 +105,7 @@ async fn main() -> Result<(), rocket::Error> {
     tokio::spawn(scope::update_voltage_periodically(
         config.scope.clone(),
         psu_voltage.clone(),
+        fan_rpm.clone(),
     ));
 
     let _rocket = rocket::build()
