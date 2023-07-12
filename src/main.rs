@@ -19,6 +19,7 @@ extern crate rocket;
 
 struct Measurements {
     temperatures: Arc<Mutex<Temperatures>>,
+    ambient_temperature: Arc<Mutex<Option<f64>>>,
     psu_voltage: Arc<Mutex<Option<f64>>>,
     fan_rpm: Arc<Mutex<Option<f64>>>,
 }
@@ -100,11 +101,13 @@ async fn main() -> Result<(), rocket::Error> {
         .unwrap_or_else(|_| warn!("Failed to load calibration"));
     let temperatures = Arc::new(Mutex::new(temperatures));
 
+    let ambient_temperature = Arc::new(Mutex::new(None));
     let psu_voltage = Arc::new(Mutex::new(None));
     let fan_rpm = Arc::new(Mutex::new(None));
 
     let measurements = Measurements {
         temperatures: temperatures.clone(),
+        ambient_temperature: ambient_temperature.clone(),
         psu_voltage: psu_voltage.clone(),
         fan_rpm: fan_rpm.clone(),
     };
@@ -112,6 +115,10 @@ async fn main() -> Result<(), rocket::Error> {
     tokio::spawn(max6675::update_temp_periodically(
         config.sensors.clone(),
         temperatures.clone(),
+    ));
+    tokio::spawn(ds18b20::update_temp_periodically(
+        config.ds18b20.clone(),
+        ambient_temperature.clone(),
     ));
     tokio::spawn(scope::update_voltage_periodically(
         config.scope.clone(),
