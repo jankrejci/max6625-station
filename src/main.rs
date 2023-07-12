@@ -32,7 +32,12 @@ async fn metrics(measurements: &State<Measurements>) -> String {
     let psu_voltage = measurements
         .psu_voltage
         .lock()
-        .expect("BUG: Failed to acquire voltage lock");
+        .expect("BUG: Failed to acquire psu_voltage lock");
+
+    let fan_rmp = measurements
+        .fan_rpm
+        .lock()
+        .expect("BUG: Failed to acquire fan_rpm lock");
 
     let time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
