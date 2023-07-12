@@ -18,7 +18,7 @@ extern crate rocket;
 
 struct Measurements {
     temperatures: Arc<Mutex<Temperatures>>,
-    voltage: Arc<Mutex<Option<f64>>>,
+    psu_voltage: Arc<Mutex<Option<f64>>>,
 }
 
 #[get("/metrics")]
@@ -28,8 +28,8 @@ async fn metrics(measurements: &State<Measurements>) -> String {
         .lock()
         .expect("BUG: Failed to acquire temperatures lock");
 
-    let voltage = measurements
-        .voltage
+    let psu_voltage = measurements
+        .psu_voltage
         .lock()
         .expect("BUG: Failed to acquire voltage lock");
 
@@ -39,8 +39,8 @@ async fn metrics(measurements: &State<Measurements>) -> String {
         .as_millis();
 
     let mut metrics = String::new();
-    if let Some(voltage) = *voltage {
-        metrics.push_str(&format!("scope_voltage_v {voltage:.2} {time}\n"));
+    if let Some(psu_voltage) = *psu_voltage {
+        metrics.push_str(&format!("scope_voltage_v {psu_voltage:.2} {time}\n"));
     }
     for (sensor_id, temp) in temperatures.inner.iter() {
         if let Some(calibration_offset) = temperatures.calibration.get(sensor_id) {
@@ -88,11 +88,11 @@ async fn main() -> Result<(), rocket::Error> {
         .unwrap_or_else(|_| warn!("Failed to load calibration"));
     let temperatures = Arc::new(Mutex::new(temperatures));
 
-    let voltage = Arc::new(Mutex::new(None));
+    let psu_voltage = Arc::new(Mutex::new(None));
 
     let measurements = Measurements {
         temperatures: temperatures.clone(),
-        voltage: voltage.clone(),
+        psu_voltage: psu_voltage.clone(),
     };
 
     tokio::spawn(max6675::update_temp_periodically(
@@ -101,7 +101,7 @@ async fn main() -> Result<(), rocket::Error> {
     ));
     tokio::spawn(scope::update_voltage_periodically(
         config.scope.clone(),
-        voltage.clone(),
+        psu_voltage.clone(),
     ));
 
     let _rocket = rocket::build()
