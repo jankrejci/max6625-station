@@ -49,6 +49,16 @@ async fn metrics(measurements: &State<Measurements>) -> String {
         metrics.push_str(&format!("scope_fan_rpm {fan_rpm:.0} {time}\n"));
     }
 
+    if let Some(ambient_temperature) = *measurements
+        .ambient_temperature
+        .lock()
+        .expect("BUG: Failed to acquire ambient_temperature lock")
+    {
+        metrics.push_str(&format!(
+            "ds18b20_temperature_c {ambient_temperature:.2} {time}\n"
+        ));
+    }
+
     let temperatures = measurements
         .temperatures
         .lock()
