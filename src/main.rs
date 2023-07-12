@@ -24,33 +24,34 @@ struct Measurements {
 
 #[get("/metrics")]
 async fn metrics(measurements: &State<Measurements>) -> String {
-    let temperatures = measurements
-        .temperatures
-        .lock()
-        .expect("BUG: Failed to acquire temperatures lock");
-
-    let psu_voltage = measurements
-        .psu_voltage
-        .lock()
-        .expect("BUG: Failed to acquire psu_voltage lock");
-
-    let fan_rmp = measurements
-        .fan_rpm
-        .lock()
-        .expect("BUG: Failed to acquire fan_rpm lock");
+    let mut metrics = String::new();
 
     let time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("BUG: Failed to get current time")
         .as_millis();
 
-    let mut metrics = String::new();
-    if let Some(psu_voltage) = *psu_voltage {
+    if let Some(psu_voltage) = *measurements
+        .psu_voltage
+        .lock()
+        .expect("BUG: Failed to acquire psu_voltage lock")
+    {
         metrics.push_str(&format!("scope_voltage_v {psu_voltage:.2} {time}\n"));
     }
-    if let Some(fan_rpm) = *fan_rpm {
+
+    if let Some(fan_rpm) = *measurements
+        .fan_rpm
+        .lock()
+        .expect("BUG: Failed to acquire fan_rpm lock")
+    {
         metrics.push_str(&format!("scope_fan_rpm {fan_rpm:.0} {time}\n"));
     }
+
+    let temperatures = measurements
+        .temperatures
+        .lock()
+        .expect("BUG: Failed to acquire temperatures lock");
+
     for (sensor_id, temp) in temperatures.inner.iter() {
         if let Some(calibration_offset) = temperatures.calibration.get(sensor_id) {
             let temp = temp + calibration_offset;
@@ -59,6 +60,7 @@ async fn metrics(measurements: &State<Measurements>) -> String {
             ));
         }
     }
+
     for (sensor_id, filtered) in temperatures.filtered.iter() {
         if let Some(calibration_offset) = temperatures.calibration.get(sensor_id) {
             let temp = filtered.value() + calibration_offset;
