@@ -1,5 +1,6 @@
 mod args;
 mod config;
+mod ds18b20;
 mod kalman;
 mod max6675;
 mod scope;
