@@ -1,3 +1,4 @@
+use crate::ds18b20;
 use crate::kalman;
 use crate::max6675;
 use crate::scope;
@@ -8,6 +9,7 @@ use std::io::Read;
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
     pub scope: scope::Descriptor,
+    pub ds18b20: ds18b20::Descriptor,
     pub sensors: max6675::Descriptor,
     pub kalman: kalman::Descriptor,
 }

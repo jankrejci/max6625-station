@@ -1,4 +1,5 @@
 use anyhow::Result;
+use serde::Deserialize;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -9,6 +10,7 @@ struct DS18B20 {
     file: File,
 }
 
+#[derive(Clone, Deserialize, Debug)]
 pub struct Descriptor {
     id: String,
 }
