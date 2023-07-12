@@ -71,7 +71,7 @@ impl Scope {
         Ok(response)
     }
 
-    pub async fn read_mean(&mut self) -> Result<f64> {
+    pub async fn read_psu_voltage(&mut self) -> Result<f64> {
         self.send("C1:PAVA? MEAN").await?;
         let response = self.recv().await?;
 
@@ -92,7 +92,7 @@ pub async fn update_voltage_periodically(descriptor: Descriptor, voltage: Arc<Mu
     scope.init().await.expect("BUG: Failed to initialize scope");
 
     loop {
-        let voltage_reading = scope.read_mean().await.ok();
+        let voltage_reading = scope.read_psu_voltage().await.ok();
         {
             let mut voltage = voltage.lock().expect("BUG: Failed to acquire voltagelock");
             *voltage = voltage_reading;
