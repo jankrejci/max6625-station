@@ -109,13 +109,20 @@ pub async fn update_voltage_periodically(
     scope.init().await.expect("BUG: Failed to initialize scope");
 
     loop {
-        let voltage_reading = scope.read_psu_voltage().await.ok();
+        let psu_voltage_reading = scope.read_psu_voltage().await.ok();
         {
-            let mut voltage = psu_voltage
+            let mut psu_voltage = psu_voltage
                 .lock()
                 .expect("BUG: Failed to acquire voltagelock");
-            *voltage = voltage_reading;
+            *psu_voltage = psu_voltage_reading;
         }
+
+        let fan_rpm_reading = scope.read_fan_rpm().await.ok();
+        {
+            let mut fan_rpm = fan_rpm.lock().expect("BUG: Failed to acquire voltagelock");
+            *fan_rpm = fan_rpm_reading;
+        }
+
         sleep(UPDATE_PERIOD_MS).await;
     }
 }
