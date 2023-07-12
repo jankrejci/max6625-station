@@ -19,6 +19,7 @@ extern crate rocket;
 struct Measurements {
     temperatures: Arc<Mutex<Temperatures>>,
     psu_voltage: Arc<Mutex<Option<f64>>>,
+    fan_rpm: Arc<Mutex<Option<f64>>>,
 }
 
 #[get("/metrics")]
@@ -89,10 +90,12 @@ async fn main() -> Result<(), rocket::Error> {
     let temperatures = Arc::new(Mutex::new(temperatures));
 
     let psu_voltage = Arc::new(Mutex::new(None));
+    let fan_rpm = Arc::new(Mutex::new(None));
 
     let measurements = Measurements {
         temperatures: temperatures.clone(),
         psu_voltage: psu_voltage.clone(),
+        fan_rpm: fan_rpm.clone(),
     };
 
     tokio::spawn(max6675::update_temp_periodically(
