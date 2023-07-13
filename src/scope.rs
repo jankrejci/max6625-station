@@ -43,13 +43,16 @@ impl Scope {
     pub async fn init(&mut self) -> Result<()> {
         self.send("*RST").await?;
         // Timebase 1 ms / div
-        self.send("TDIV 1MS").await?;
+        self.send("TDIV 10MS").await?;
         // Probe attenuation 10x
         self.send("C1:ATTN 10").await?;
-        // Channell sensitivity 5 V / div
+        self.send("C2:ATTN 10").await?;
+        // Channell sensitivity
         self.send("C1:VDIV 5V").await?;
-        // Offset -10 V
+        self.send("C2:VDIV 1V").await?;
+        // Channel offset
         self.send("C1:OFST -15V").await?;
+        self.send("C2:OFST -3V").await?;
 
         sleep(Duration::from_millis(5000)).await;
         Ok(())
