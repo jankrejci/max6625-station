@@ -1,10 +1,9 @@
 [scope]
-# address = "10.33.50.233"
-address = "192.168.0.18"
+address = "10.34.0.65"
 port = 5025
 
 [ds18b20]
-id = "28-00000000"
+id = "28-000008e400df"
 
 [sensors]
 num_sensors = 12
