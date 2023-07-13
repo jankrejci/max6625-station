@@ -90,11 +90,10 @@ impl Scope {
     pub async fn read_fan_rpm(&mut self) -> Result<f64> {
         self.send("C2:PAVA? FREQ").await?;
         let response = self.recv().await?;
-
         match response.trim().split(',').nth(1) {
             None => Err(anyhow!("Received wrong response")),
             Some(value) => {
-                let value = value.replace('V', "");
+                let value = value.replace("Hz", "");
                 let mut fan_rpm = f64::from_str(&value)?;
                 // Frequency to RPM, there are 2 pulses per fan revolution
                 fan_rpm *= 60.0 / 2.0;
