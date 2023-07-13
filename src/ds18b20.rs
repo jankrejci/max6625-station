@@ -1,8 +1,9 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
 
@@ -29,8 +30,21 @@ impl DS18B20 {
     pub fn read_temp(&mut self) -> Result<f64> {
         let mut buffer = String::new();
         self.file.read_to_string(&mut buffer)?;
-        let lines = buffer.split('\n');
-        Ok(0.0)
+        let lines: Vec<_> = buffer.split('\n').collect();
+
+        let crc_check = lines.first().expect("BUG: Failed to get data");
+        if !crc_check.contains("YES") {
+            return Err(anyhow!("Failed to obtain valid data"));
+        }
+
+        let value = lines.last().expect("BUG: Failed to get data");
+        let value: Vec<_> = value.split('=').collect();
+        let value = value.last().expect("BUG: Failed to get temperature");
+
+        let value = f64::from_str(value)?;
+
+        dbg!(value);
+        Ok(value / 1000.0)
     }
 }
 
