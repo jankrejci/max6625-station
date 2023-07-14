@@ -1,6 +1,6 @@
 FROM debian:bullseye
 
-RUN apt update && apt install -y curl ssh gcc-aarch64-linux-gnu build-essential
+RUN apt update && apt install -y curl ssh gcc-aarch64-linux-gnu libssl-dev build-essential
 
 RUN mkdir /project
 ARG UID
