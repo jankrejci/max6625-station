@@ -61,6 +61,14 @@ async fn metrics(measurements: &State<Measurements>) -> String {
         ));
     }
 
+    if let Some(power) = *measurements
+        .power
+        .lock()
+        .expect("BUG: Failed to acquire ambient_temperature lock")
+    {
+        metrics.push_str(&format!("netio_power_w {power:.0} {time}\n"));
+    }
+
     let temperatures = measurements
         .temperatures
         .lock()
