@@ -1,6 +1,7 @@
 use crate::ds18b20;
 use crate::kalman;
 use crate::max6675;
+use crate::netio;
 use crate::scope;
 use serde::Deserialize;
 use std::fs::File;
@@ -12,6 +13,7 @@ pub struct Config {
     pub ds18b20: ds18b20::Descriptor,
     pub sensors: max6675::Descriptor,
     pub kalman: kalman::Descriptor,
+    pub netio: netio::Descriptor,
 }
 
 impl Config {

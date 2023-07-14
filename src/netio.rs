@@ -4,8 +4,10 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
 
+#[derive(Clone, Deserialize, Debug)]
 pub struct Descriptor {
     address: String,
+    output: Vec<String>,
 }
 
 pub struct Netio {

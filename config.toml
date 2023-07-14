@@ -14,3 +14,7 @@ calibration_file = "calibration.json"
 process_variance = 0.05
 measurement_error = 2.0
 initial_temperature = 25.0
+
+[netio]
+address = "10.34.0.6"
+output = ["out3", "out4"]
