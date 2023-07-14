@@ -139,6 +139,10 @@ async fn main() -> Result<(), rocket::Error> {
         psu_voltage.clone(),
         fan_rpm.clone(),
     ));
+    tokio::spawn(netio::update_power_periodically(
+        config.netio.clone(),
+        power.clone(),
+    ));
 
     let _rocket = rocket::build()
         .mount("/", routes![metrics])

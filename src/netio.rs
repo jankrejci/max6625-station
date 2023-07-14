@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
@@ -20,7 +21,9 @@ impl Netio {
         Self { url }
     }
 
-    pub fn read_power(&self) -> Result<f64> {
+    pub async fn read_power(&self) -> Result<f64> {
+        let response = reqwest::get(&self.url).await?;
+        dbg!(response);
         Ok(0.0)
     }
 }
@@ -31,7 +34,7 @@ pub async fn update_voltage_periodically(descriptor: Descriptor, power: Arc<Mute
     let netio = Netio::new(&descriptor);
 
     loop {
-        let power_reading = netio.read_power().ok();
+        let power_reading = netio.read_power().await.ok();
         {
             let mut power = power.lock().expect("BUG: Failed to acquire voltagelock");
             *power = power_reading;
