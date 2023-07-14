@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use serde::Deserialize;
-use std::collections::HashMap;
-use std::str::FromStr;
+use serde_json::Value;
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
 
@@ -22,9 +21,18 @@ impl Netio {
     }
 
     pub async fn read_power(&self) -> Result<f64> {
-        let response = reqwest::get(&self.url).await?;
-        dbg!(response);
-        Ok(0.0)
+        let response = reqwest::get(&self.url).await?.text().await?;
+        let v: Value = serde_json::from_str(&response)?;
+
+        let mut load = 0.0;
+        load += v["Outputs"][2]["Load"]
+            .as_f64()
+            .ok_or(anyhow!("Failed to get load"))?;
+        load += v["Outputs"][3]["Load"]
+            .as_f64()
+            .ok_or(anyhow!("Failed to get load"))?;
+
+        Ok(load)
     }
 }
 
