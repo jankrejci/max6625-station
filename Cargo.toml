@@ -11,7 +11,7 @@ rppal = "0.14.1"
 anyhow = "1.0.71"
 rocket = "0.5.0-rc.3"
 serde_json = "1.0.99"
-serde = "1.0.164"
+serde= { version = "1.0.164", features = ["derive"] }
 tokio = { version = "1.2.0", features = ["full"] }
 tokio-util = { version = "0.6.3", features = ["codec"] }
 tokio-stream = "0.1"
@@ -20,4 +20,4 @@ toml = "0.7.5"
 clap = { version = "4.3.10", features = ["derive"] }
 env_logger = "0.10.0"
 log = "0.4.19"
-reqwest = "0.11.18"
+reqwest = { version = "0.11", features = ["json"] }
