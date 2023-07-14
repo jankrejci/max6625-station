@@ -28,7 +28,7 @@ impl Netio {
     }
 }
 
-pub async fn update_voltage_periodically(descriptor: Descriptor, power: Arc<Mutex<Option<f64>>>) {
+pub async fn update_power_periodically(descriptor: Descriptor, power: Arc<Mutex<Option<f64>>>) {
     const UPDATE_PERIOD_MS: Duration = Duration::from_millis(500);
 
     let netio = Netio::new(&descriptor);
