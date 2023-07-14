@@ -44,14 +44,15 @@ impl Scope {
         self.send("*RST").await?;
         // Timebase 1 ms / div
         self.send("TDIV 10MS").await?;
-        // Probe attenuation 10x
+
+        // Channel for PSU voltage measurement
         self.send("C1:ATTN 10").await?;
-        self.send("C2:ATTN 10").await?;
-        // Channell sensitivity
         self.send("C1:VDIV 5V").await?;
-        self.send("C2:VDIV 1V").await?;
-        // Channel offset
         self.send("C1:OFST -15V").await?;
+
+        // Channel for Fan RPM measurement
+        self.send("C2:ATTN 10").await?;
+        self.send("C2:VDIV 1V").await?;
         self.send("C2:OFST -3V").await?;
 
         sleep(Duration::from_millis(5000)).await;
