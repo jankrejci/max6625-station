@@ -8,6 +8,12 @@ TEMP_FOLDER="/tmp"
 TARGET="$2"
 TARGET_FOLDER="/tmp"
 
+# Run the binary if the runner is executed locally
+if [ -z "$TARGET" ]; then
+    ./$BIN_PATH
+    exit;
+fi
+    
 # Compress the binary
 tar -czvf "$TEMP_FOLDER/$BIN_FILE.tar.gz"  -C "$BIN_FOLDER" "$BIN_FILE"
 
@@ -19,6 +25,7 @@ scp \
     "$TARGET:$TARGET_FOLDER"
 
 scp -o "ForwardAgent yes" "config.toml" "$TARGET:$TARGET_FOLDER"
+scp -o "ForwardAgent yes" "Rocket.toml" "$TARGET:$TARGET_FOLDER"
 
 
 # Decompress the binary
