@@ -5,6 +5,7 @@ mod kalman;
 mod max6675;
 mod metric;
 mod netio;
+mod ring_buffer;
 mod scope;
 mod spi;
 
