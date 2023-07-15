@@ -66,6 +66,17 @@ CS pins pinout for each sensor. ID is sensor ID in software.
 
 ![](./resources/station_asm.jpg "MAX6675 station assembly")
 
+## Cross compilation
+
+To compile for RPi targetm you need to install compilation tools
+```
+sudo apt install gcc-aarch64-linux-gnu
+```
+Add the desired compilation target
+```
+rustup target add aarch64-unknown-linux-gnu
+```
+
 ## Run the application
 
 ```
