@@ -3,6 +3,7 @@ mod config;
 mod ds18b20;
 mod kalman;
 mod max6675;
+mod metric;
 mod netio;
 mod scope;
 mod spi;
